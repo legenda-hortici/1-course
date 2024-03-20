@@ -1,0 +1,97 @@
+using namespace std;
+#include <stdio.h> // стандартный ввод/вывод
+#include <iostream> // потоковый ввод/вывод
+
+double calc_cpp(double a, double b)
+{
+	if (a > b)
+	{
+		return a / b - a;
+	}
+	else if (a == b)
+	{
+		return -a;
+	}
+	else
+	{
+		return (a*b - 5) / a;
+	}
+}
+
+double calc_asm(double a, double b)
+{
+	double res; 
+	int status; 
+	const int c5 = 5;const int c1 = -1;
+	__asm {
+		//st0  st1	st2	st3	st4
+		finit;//	инициализация сопроцессора
+		fld 	qword ptr[a];//	a
+		fld 	qword ptr[b];//	b	a
+		fcom 	st(1);// сравниваем a и b
+		fstsw status;// сохраняем регистр флагов сопроцессора
+		mov ah, byte ptr[status + 1]
+		sahf;// записываем в регистр флагов процессора
+
+		jb a_bigger;// переход если a больше
+		ja b_bigger;// переход если b больше
+		fild c1;
+		fmulp st(1), st(0);
+		jmp	endcalc
+
+		a_bigger : ftst;// сравнение b с 0
+				   fstsw status;// сохраняем регистр флагов сопроцессора
+				   mov ah, byte ptr[status + 1]
+				   sahf;// записываем в регистр флагов процессора
+				   je error;// переход если a = 0
+				   fdivp st(1), st;//	a / b
+				   fld a;//    a     a / b
+				   fild c1;//   -1     a     a/b
+				   fmulp st(1), st;//    -a    a/b
+				   faddp st(1), st;//	a/b - a
+				   jmp	endcalc
+
+				   b_bigger : fldz;//	0   b   a
+							  fcomp st(2);//	сравнение a с 0	  b   a
+
+							  fstsw status;// сохраняем регистр флагов сопроцессора
+							  mov ah, byte ptr[status + 1]
+							  sahf;// записываем в регистр флагов процессора
+							  je error;// переход если b = 0
+							  fmulp st(1), st(0);//	 a*b    
+							  fild c5;//  5  a*b   
+							  fsubp st(1), st;//	a*b-5 
+							  fld a;//  a    a*b-5
+							  fdivp st(1), st;//	(a * b - 5) / a
+							  jmp	endcalc
+
+							  error : fldz; формируем результат ошибки
+									  endcalc : fstp 	res;сохранение результата
+	}
+	return res;
+}
+
+
+int main()
+{
+	setlocale(LC_ALL, "RUSSIAN");
+	cout << "Ассемблер. Лабораторная работа № 4. Команды арифметического сопроцессора.\n";
+	cout << "Выполнил: Мананников М.А., группа 6103-020302D\n";
+	cout << "Вариант 42: \nx=a / b - a, если a>b \nx=-a, если a=b\nx=(a*b-5)/a, если a<b" << endl;
+	double a, b;
+	cout << "a = ";
+	cin >> a;
+	cout << "b = ";
+	cin >> b;
+	if ((a > b && b != 0) || (a < b && a != 0) || (a == b))
+	{
+		cout << "Ответ на ASM: " << calc_asm(a, b) << endl;
+		cout << "Ответ на C++: " << calc_cpp(a, b) << endl;
+	}
+	else
+	{
+		cout << "Вы ввели некоректные значения!\n";
+	}
+	system("PAUSE");
+	return 0;
+}

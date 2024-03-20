@@ -1,0 +1,91 @@
+#include <cmath>
+#include <iostream>
+
+using namespace std;
+
+double calc_cpp(double a, double b) {
+double pi = 3.14159265358979323846;
+double X = -36 * pi + sin(a) + cos(b) - tan(-a) - pi / tan(pi * b) + pi / (36 * b + a) / (36 * a - b);
+return X;
+}
+
+double calc_asm(double a, double b) {
+double res;
+const int c36 = 36;
+const double pi = 3.14159265358979323846;
+__asm {
+// save registers
+push ebx
+push esi
+push edi
+sub esp, 8; allocate space for res on the stack
+
+// load values
+fldpi; // push pi onto the stack
+fld qword ptr[a]; // push a onto the stack
+fld qword ptr[b]; // push b onto the stack
+
+// calculate sin(a)
+fsin; // sin(a)
+
+// calculate cos(b)
+fld qword ptr[b]; // push b onto the stack
+fcos; // cos(b)
+
+// calculate tan(-a)
+fld qword ptr[a]; // push a onto the stack
+fchs; // -a
+fptan; // tan(-a), 1
+
+// calculate π*tan(π*b)
+fld qword ptr[b]; // push b onto the stack
+fldpi; // push pi onto the stack
+fmul; // b * pi
+fptan; // tan(pi * b), 1
+fdiv; // 1 / tan(pi * b)
+fmul pi; // π / tan(pi * b)
+
+// calculate π/(36*b+a)/(36*a-b)
+fld qword ptr[a]; // push a onto the stack
+fld qword ptr[b]; // push b onto the stack
+fld1; // push 1 onto the stack
+push c36; // push 36 onto the stack
+push c36; // push 36 onto the stack
+fld qword ptr[b]; // push b onto the stack
+fmul; // 36, b
+fadd qword ptr[a]; // 36*b + a
+fdiv; //
+fld qword ptr[a]; // push a onto the stack
+push c36; // push 36 onto the stack
+fmul qword ptr[b]; // 36*a - b
+fsub; //
+fdiv; //
+fdiv pi; //
+
+// calculate X
+fadd; // sin(a) + cos(b)
+fsub; // sin(a) + cos(b) - tan(-a)
+fsub; // sin(a) + cos(b) - tan(-a) - π / tan(π * b)
+fadd; // sin(a) + cos(b) - tan(-a) - π / tan(π * b) + π / (36 * b + a) / (36 * a - b)
+fstp qword ptr[res]; // store the result and pop it from the stack
+
+// deallocate space for res on the stack
+add esp, 8;
+
+// restore registers
+pop edi
+pop esi
+pop ebx
+}
+return res;
+}
+
+
+int main() {
+double a = 1.0, b = 2.0;
+double result_cpp = calc_cpp(a, b);
+double result_asm = calc_asm(a, b);
+cout « "C++ result: " « result_cpp « endl;
+cout « "ASM result: " « result_asm « endl;
+return 0;
+}

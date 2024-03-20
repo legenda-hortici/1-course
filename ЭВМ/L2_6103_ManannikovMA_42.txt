@@ -1,0 +1,84 @@
+using namespace std;
+#include <stdio.h> // стандартный ввод/вывод
+#include <iostream> // потоковый ввод/вывод
+
+int calc_cpp(int a, int b)
+{
+	if (a > b)
+	{
+		return a / b - a;
+	}
+	else if (a == b)
+	{
+		return -a;
+	}
+	else
+	{
+		return (a*b-5)/a;
+	}
+}
+
+pair<int, int> calc_asm(int a, int b)
+{
+	int result = 0;
+	int err = 0;
+	__asm {
+		mov ecx, b;// < eсx >= b
+		mov	ebx, a;// < ebx >= a
+		cmp	ebx, ecx;// сравнение a и b
+		jg l_bigger;// переход если a > b
+		jl l_smaller;// переход если a < b
+		mov	eax, a;// < eax >= a
+		imul eax, -1;// < eax >= -a
+		jmp	exit_l;// переход на конец программы
+		l_bigger :
+		or ecx, ecx;// сравнение b и 0
+			je	error;// ошибка деление на ноль
+			mov	eax, ebx;// < eax >= a
+			cdq;
+			idiv ecx;// <eax> = a/b
+			sub	eax, ebx;// <eax> = a/b-a
+			jmp	exit_l;// переход на конец программы
+		l_smaller :
+		or ebx, ebx; сравнение a и 0
+			je    error;// ошибка деление на ноль
+			mov eax, ebx;// < eax >= a
+			imul eax, ecx;// < eax >= a*b
+			jo    error;// ошибка переполнение
+			sub eax, 5;// < eax >= a*b-5
+			adc	edx, -1;//коррекция старшей части
+			cdq;
+			idiv ebx;// <eax> = (a*b-5) / a
+			jmp	exit_l;// переход на конец программы
+			error :
+		mov err, 1
+			exit_l :
+			mov result, eax
+	}
+	return pair<int, int>(result, err); // возвращаем результат вычисления выражения
+}
+
+int main()
+{
+	setlocale(LC_ALL, "RUSSIAN");
+	cout << "Ассемблер. Лабораторная работа № 2. Арифметические команды и команды переходов.\n";
+	cout << "Выполнил: Мананников М.А., группа 6103-020302D\n";
+	cout << "Вариант 42: \nx=a / b - a, если a>b \nx=-a, если a=b\nx=(a*b-5)/a, если a<b" << endl;
+	int a, b;
+	cout << "a = "; // потоковый вывод
+	cin >> a; // потоковый ввод
+	printf("b = "); // стандартный вывод
+	scanf_s("%d", &b); // стандартный ввод
+	auto f = calc_asm(a, b);
+	if (f.second == 1)
+	{
+		cout << "Попытка деления на ноль\n";
+	}
+	else
+	{
+		cout << "Результат на ассемблере= " << f.first << endl;
+		cout << "Результат на c++= " << calc_cpp(a, b) << endl;
+	}
+	system("PAUSE");
+	return 0;
+}

@@ -1,0 +1,101 @@
+#define _USE_MATH_DEFINES
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+double calcC(double x)
+{
+	return  sqrt(log(x-2) + (x - 2)*pow(M_E,-2 * x ) + pow(2, (x+2)) + (x-2)*sin(x-2));
+}
+double pow_Asm(double a, double b) {
+	double res = 0;
+	const int c1 = 1;
+	__asm {
+		finit//                                st0            st1          st2           st3           st4
+		fld a//                                 a
+		fld b//                                 b              a
+		fxch st(1)//                            a              b
+		fldln2//                               ln(2)           a            b
+		fxch st(1)//                            a             ln(2)         b
+		fyl2x//                                ln(a)           b
+		fmulp st(1), st(0)//                    bln(a)
+		fldl2e//                               log2(e)        bln(a)
+		fmul//                                 bln(a)log2(e)
+		fld st//                             bln(a)log2(e) bln(a)log2(e)
+		frndint//                           [bln(a)log2(e)] bln(a)log2(e)
+		fsub st(1), st//                    [bln(a)log2(e)] {bln(a)log2(e)}
+		fxch st(1)//                        {bln(a)log2(e)} [bln(a)log2(e)]
+		f2xm1//                             2^{bln(a)log2(e)}-1 [bln(a)log2(e)]
+		fld1//                                   1    2^{bln(a)log2(e)}-1 [bln(a)log2(e)]
+		fadd//                            2^{bln(a)log2(e)} [bln(a)log2(e)]
+		fscale//                                a^b
+		fstp st(1)//
+		fstp res//
+	}
+	return res;
+}
+double calcASM(double x)  
+{
+	double result;
+	const int c2 = -2;
+	double pow2 = pow_Asm(2,x+2);
+	double ePow = pow_Asm(M_E, -2 * x);
+
+	_asm
+	{
+		//                                          st(0)      st(1)      st(2)      st(3)         st(4)       st(5)      st(6)        st(7)
+		finit; //инициализация сопроцессора  
+		fldln2;//									ln(2)
+		fld x;//									x			ln(2)
+		fild c2;//                                  -2          x			ln(2)
+		faddp st(1), st(0);//                       x-2        ln(2)
+		fyl2x;//									ln(x-2)
+		fld x;//                                    x         ln(x-2)
+		fild c2;//                                  -2          x         ln(x-2)
+		faddp st(1), st(0);//                       x-2        ln(x-2)
+		fld ePow;//                                 e^-2x      x-2        ln(x-2)
+		fmulp st(1), st(0);//                    e^-2x*(x-2)   ln(x-2)
+		fld pow2;//                             2^(x+2)      e^-2x*(x-2)  ln(x-2)
+		fld x;//                                    x         2^(x+2)     e^-2x*(x-2)   ln(x-2)
+		fild c2;//                                  -2          x         2^(x+2)      e^-2x*(x-2)   ln(x-2)
+		faddp st(1), st(0);//                       x-2        2^(x+2)    e^-2x*(x-2)   ln(x-2)
+		fld x;//                                    x         x-2         2^(x+2)       e^-2x*(x-2)   ln(x-2)
+		fild c2;//                                  -2          x         x-2          2^(x+2)      e^-2x*(x-2)   ln(x-2)
+		faddp st(1), st(0);//                       x-2        x-2        2^(x+2)      e^-2x*(x-2)   ln(x-2)
+		fsin;//                                    sin(x-2)    x-2        2^(x+2)      e^-2x*(x-2)   ln(x-2)
+		fmulp st(1), st(0);//                  sin(x-2)*(x-2)  2^(x+2)    e^-2x*(x-2)  ln(x-2)
+		faddp st(1), st(0);//           sin(x-2)*(x-2)+2^(x+2)   e^-2x*(x-2)  ln(x-2)
+		faddp st(1), st(0);//          sin(x-2)*(x-2)+2^(x+2)+e^-2x*(x-2)     ln(x-2)
+		faddp st(1), st(0);//  sin(x-2)*(x-2) + 2^(x+2) + e^-2x*(x-2) + ln(x-2)
+		fstp result; // сохраняем результат функции
+	}
+	return sqrt(result);
+}
+int main()
+{
+	try
+	{
+		setlocale(LC_ALL, "RUSSIAN");
+		cout << "Лабораторная работа №6, 60 вариант, Максим Маннаников, студент 6103-020302D\n";
+		cout << "Вычислить y = (ln(x-2) + (x-2)*e^-2x + 2^(x+2) + (x-2)*sin(x-2))^0,5\n";
+		cout << "на промежутке [2;8]\n\n";
+		cout << "Введите шаг h = ";
+		double h;
+		cin >> h;
+		double x = 2;
+		cout << setw(5) << "x" << setw(15) << "Результат С++" << setw(15) << "Результат ASM" << endl;
+		while (x <= 8)
+		{
+			cout << setw(5) << x << setw(15) << calcC(x) << setw(15) << calcASM(x) << endl;
+			x += h;
+		}
+		system("PAUSE");
+		return 0;
+	}
+	catch (invalid_argument& e)
+	{
+		cout << e.what() << endl;
+	}
+}

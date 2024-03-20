@@ -1,0 +1,126 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <math.h>
+#include <iomanip>
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+
+double calcC(double x)
+{
+	return (3 + pow(x, 3 / 4)) / sqrt(2 + pow(x, 2 / 3));
+}
+double pow_Asm(double a, double b) {
+	double res = 0;
+	const int c1 = 1;
+	__asm {
+		finit//                                st0            st1          st2           st3           st4
+		fld a//                                 a
+		fld b//                                 b              a
+		fxch st(1)//                            a              b
+		fldln2//                               ln(2)           a            b
+		fxch st(1)//                            a             ln(2)         b
+		fyl2x//                                ln(a)           b
+		fmulp st(1), st(0)//                    bln(a)
+		fldl2e//                               log2(e)        bln(a)
+		fmul//                                 bln(a)log2(e)
+		fld st//                             bln(a)log2(e) bln(a)log2(e)
+		frndint//                           [bln(a)log2(e)] bln(a)log2(e)
+		fsub st(1), st//                    [bln(a)log2(e)] {bln(a)log2(e)}
+		fxch st(1)//                        {bln(a)log2(e)} [bln(a)log2(e)]
+		f2xm1//                             2^{bln(a)log2(e)}-1 [bln(a)log2(e)]
+		fld1//                                   1    2^{bln(a)log2(e)}-1 [bln(a)log2(e)]
+		fadd//                            2^{bln(a)log2(e)} [bln(a)log2(e)]
+		fscale//                                a^b
+		fstp st(1)//
+		fstp res//
+	}
+	return res;
+}
+double calcASM(double x)
+{
+	double result;
+	const int c2 = 2;
+	const int c3 = 3;
+	double x34Pow = pow_Asm(x, 3 / 4);
+	double x23Pow = pow_Asm(x, 2 / 3);
+	_asm
+	{
+		//                                          st(0)      st(1)      st(2)      st(3)     st(4)    
+		finit; //инициализация сопроцессора     
+		fild c3;//                                   3       
+		fld x34Pow;//                              x^(3/4)      3
+		faddp st(1), st(0);//                      x^(3/4)+3
+		fild c2;//                                   2       x^(3/4)+3
+		fld x23Pow;//						       x^(2/3)       2       x^(3/4)+3
+		faddp st(1), st(0);//                    x^(2/3)+2   x^(3/4)+3
+		fsqrt;//                            sqrt(x^(2/3)+2)  x^(3/4)+3
+		fdiv;//                         (x^(3/4)+3)/sqrt(x^(2/3)+2)
+		fstp result // сохраняем результат функции
+	}
+	return result;
+}
+
+
+int main()
+{
+	try
+	{
+		setlocale(LC_ALL, "RUSSIAN");
+		double n, x, a = 1, b = 3, integ = 0, h, xc, integc = 0, count = 1;
+		cout << "Лабораторная работа №7, 60 вариант, Мананников Максим, студент 6103-020302D\n";
+		cout << "Вычислить на промежутке [1 ; 3] Интеграл: (3+x^(3/4))/sqrt(x^(2/3)+2)\n";
+		cout << "Введите n = ";
+		cin >> n;
+		x = a;
+		xc = a;
+		h = ((b - a) / (n));
+		cout << setw(10) << "i" << setw(15) << "x" << setw(25) << "Результат С++" << setw(25) << "Результат ASM" << endl;
+		for (int i = 0; i <= n; i++)
+		{
+			// ASM
+			if (i % 2 == 0 && i != 0 && i != n)
+			{
+				integ += 2 * calcASM(x + i * h);
+			}
+			else
+			{
+				if (i % 2 == 0 && (i == 0 || i == n))
+				{
+					integ += calcASM(x + i * h);
+				}
+				else
+				{
+					integ += 4 * calcASM(x + i * h);
+				}
+			}
+			// c++
+			if (i % 2 == 0 && i != 0 && i != n)
+			{
+				integc += 2 * calcC(xc + i * h);
+			}
+			else
+			{
+				if (i % 2 == 0 && (i == 0 || i == n))
+				{
+					integc += calcC(xc + i * h);
+				}
+				else
+				{
+					integc += 4 * calcC(xc + i * h);
+				}
+			}
+			cout << setw(10) << count << setw(15) << x << setw(25) << integc << setw(25) << integ << endl;
+			count++;
+
+		}
+		cout << "Результат интгрирования asm: " << integ * h / 3 << endl;
+		cout << "Результат интгрирования cpp: " << integc * h / 3 << endl;
+		system("PAUSE");
+		return 0;
+	}
+	catch (invalid_argument& e)
+	{
+		cout << e.what() << endl;
+	}
+}

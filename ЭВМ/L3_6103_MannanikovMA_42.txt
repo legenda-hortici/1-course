@@ -1,0 +1,83 @@
+using namespace std;
+#include <stdio.h> // стандартный ввод/вывод
+#include <iostream> // потоковый ввод/вывод
+
+int calc_cpp(int mas[], int size)
+{
+	int count = 0;
+	int sum = 0;
+	for (int i = 0; i < size; i++)
+	{
+		if (mas[i] % 2 == 0)
+		{
+			count++;
+			sum += mas[i];
+		}
+	}
+	return sum/count;
+}
+
+int calc_asm(int mas[], int size1)
+{					 //В одномерном массиве A={a[i]} целых чисел вычислить среднее арифметическое четных элементов.
+	int result = 0;  //В одномерном массиве A={a[i]} целых чисел вычислить разность количества положительных и отрицательных элементов массива.
+	__asm {
+
+		xor	esi, esi;// подготовим регистр индекса в массиве
+		xor	edi, edi;// кол-во чётных элемнтов		
+		mov	ebx, mas;// ebx указывает на начало массива
+		mov edx, 0;//сумма чётных элементов массива
+		mov	ecx, size1;// счётчик цикла по всем элементам массива
+		jcxz exit_1;// завершить если длина массива 0
+	begin_loop:
+		mov	eax, [ebx + esi * 4];// определяем текущий элемент
+		test eax, 1; //Проверка числа на чётность
+			jz end_loop;// четное - переход на метку Even
+		zero:
+			dec edi;
+			sub edx, eax;
+	end_loop :
+		inc	esi;// переходим к следующему элементу
+		inc edi;// прибавляем 1 в счётчик элементов
+		add edx, eax;// записали элемент массива в сумму
+		loop begin_loop;// повторяем цикл для всех элементов массива
+	exit_1: 
+		mov eax, edx;
+		mov ecx, edi;
+		cdq;
+		idiv ecx; //eax=edx:eax
+		mov result, eax;// возвращаем разность
+
+	}
+	return result; // возвращаем результат вычисления выражения
+
+}
+
+int main()
+{
+	setlocale(LC_ALL, "RUSSIAN");
+	cout << "Ассемблер. Лабораторная работа № 3. Обработка массивов.\n";
+	cout << "Выполнил: Маннаников М.А., группа 6103-020302D\n";
+	cout << "Вариант 42: \nВ одномерном массиве A={a[i]} целых чисел вычислить среднее арифметическое четных элементов." << endl;
+	int size = 0;
+	int* mas;
+	cout << "Введите размер массива" << endl;
+	cin >> size;
+	if (size < 0) {
+		cout << "Размерность массива не может быть отрицательной" << endl;
+	}
+	else {
+		if (size == 0) {
+			cout << "Массив пуст" << endl;
+		}
+		else {
+			mas = new int[size];
+			for (int i = 0; i < size; i++) {
+				cout << "[" << i + 1 << "]" << ": ";
+				cin >> mas[i];
+			}
+			cout << "Резельтат ассемблер " << calc_asm(mas, size) << endl << "Результат С++ " << calc_cpp(mas, size) << endl;
+		}
+	}
+	system("PAUSE");
+	return 0;
+}

@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
+double calcASMF(double x)
+{
+	double result;
+	const int c628 = 628;
+	const int c2154 = 2154;
+	const int c797 = 797;
+	const int c4051 = 4051;
+	const int c2045 = -2045; 
+	_asm
+	{
+		//                                          st(0)      st(1)      st(2)      st(3)      st(4)     
+		finit; //инициализация сопроцессора
+		fld x; //                                     x 
+		fld x;   //                                   x          x        
+		fmul st(1), st(0); //                         x         x^2
+		fld st; x //                                  x          x         x^2
+		fmulp st(1), st(0); //                       x^2        x^2
+		fmul st(1), st(0); //                        x^2        x^4
+		fmul st(1), st(0); //                        x^2        x^6
+		fmul st(1), st(0); //                        x^2        x^8
+		fmulp st(1), st(0); //                       x^10
+		fld x; //									  x         x^10  
+		fmulp st(1), st(0); //                       x^11  
+		fild  c628;//                                628        x^11
+		fmulp st(1), st(0); //                      628x^11
+		fld x; //                                     x       628x^11
+		fld x; //                                     x          x         628x^11
+		fmul st(1), st(0); //                         x        x^2         628x^11       
+		fld x; //                                     x          x         x^2       628x^11
+		fmulp st(1), st(0); //                        x^2        x^2       628x^11     
+		fmul st(1), st(0); //                         x^2        x^4	   628x^11
+		fmul st(1), st(0); //                         x^2        x^6	   628x^11
+		fmulp st(1), st(0); //                        x^8	  628x^11
+		fld x; //                                     x          x^8       628x^11
+		fmulp st(1), st(0); //                        x^9	   628x^11
+		fild c2154; //                                2154		 x^9	   628x^11
+		fmulp st(1), st(0); //                        2154x^9	 628x^11
+		fld x; //                                     x       2154x^9	 628x^11
+		fld x; //                                     x          x         2154x^9	 628x^11
+		fmul st(1), st(0); //                         x         x^2        2154x^9	 628x^11
+		fld x; //                                     x          x         x^2       2154x^9	 628x^11
+		fmulp st(1), st(0); //                        x^2        x^2       2154x^9	 628x^11
+		fmulp st(1), st(0); //                        x^4      2154x^9	   628x^11
+		fld x; //                                     x         x^4        2154x^9	 628x^11
+		fmulp st(1), st(0); //                        x^5      2154x^9	   628x^11
+		fild c797; //								  797       x^5	       2154x^9	 628x^11
+		fmulp st(1), st(0); //                       797x^5	   2154x^9	   628x^11
+		fld x; //                                     x		   797x^5	   2154x^9	   628x^11
+		fild c4051; //                               4051	      x        797x^5	   2154x^9	   628x^11
+		fmulp st(1), st(0); //                       4051x      797x^5	   2154x^9	   628x^11
+		fild c2045; //                               -2045       4051x      797x^5	   2154x^9	   628x^11
+		faddp st(1), st(0); //                    -2045+4051x    797x^5	   2154x^9	   628x^11
+		faddp st(1), st(0); //             -2045+4051x+797x^5    2154x^9	   628x^11
+		faddp st(1), st(0); //      -2045+4051x+797x^5+2154x^9   628x^11
+		faddp st(1), st(0); //  -2045+4051x+797x^5+2154x^9+628x^11
+		fstp result // сохраняем результат функции
+	}
+	return result;
+}
+
+
+double calcASMD(double x) 
+{
+	double result;
+	const int c6908 = 6908;
+	const int c19386 = 19386;
+	const int c3985 = 3985;
+	const int c4051 = 4051;        
+	_asm
+	{
+		//                                          st(0)      st(1)      st(2)      st(3)      st(4)     
+		finit; //инициализация сопроцессора
+		fld x; //                                     x 
+		fld x;   //                                   x          x        
+		fmul st(1), st(0); //                         x         x^2
+		fld x; //                                     x          x         x^2
+		fmulp st(1), st(0); //                       x^2        x^2
+		fmul st(1), st(0); //                        x^2        x^4
+		fmul st(1), st(0); //                        x^2        x^6
+		fmul st(1), st(0); //                        x^2        x^8
+		fmulp st(1), st(0); //                       x^10       
+		fild c6908; //                               6908       x^10
+		fmulp st(1), st(0); //                      6908x^10
+		fld x;   //                                   x      6908x^10
+		fld x;   //                                   x          x      6908x^10
+		fmul st(1), st(0); //                         x         x^2      6908x^10
+		fld st; x //                                  x          x         x^2     6908x^10
+		fmulp st(1), st(0); //						 x^2        x^2      6908x^10
+		fmul st(1), st(0); //                        x^2        x^4      6908x^10
+		fmul st(1), st(0); //                        x^2        x^6      6908x^10
+		fmulp st(1), st(0); //                       x^8     6908x^10
+		fild c19386; //                             19386       x^8      6908x^10
+		fmulp st(1), st(0); //                      19386x^8     6908x^10
+		fld x; //                                     x       19386x^8     6908x^10
+		fld x;   //                                   x          x        19386x^8     6908x^10
+		fmul st(1), st(0); //                         x         x^2       19386x^8     6908x^10
+		fmul st(1), st(0); //                         x         x^3       19386x^8     6908x^10
+		fmulp st(1), st(0); //                       x^4      19386x^8    6908x^10
+		fild c3985; //                              3985        x^4     19386x^8     6908x^10
+		fmulp st(1), st(0); //                      3985x^4    19386x^8     6908x^10
+		fild c4051; //                              4051       3985x^4    19386x^8     6908x^10
+
+
+		faddp st(1), st(0); //             4051+3985x^4      19386x^8     6908x^10
+		faddp st(1), st(0); //     4051+3985x^4+19386x^8     6908x^10
+		faddp st(1), st(0); //    4051+3985x^4+19386x^8+6908x^10
+		fstp result // сохраняем результат функции
+	}
+	return result;
+}
+
+
+double derivative(double x)
+{
+	return 6908 * pow(x, 10) + 19386 * pow(x, 8) + 3985 * pow(x, 4) + 4051;
+}
+
+
+double function(double x)
+{
+	return 628 * pow(x, 11) + 2154 * pow(x, 9) + 797 * pow(x, 5) + 4051 * x - 2045;
+}
+
+
+int main()
+{
+	try
+	{
+		setlocale(LC_ALL, "RUSSIAN");
+		cout << "Лабораторная работа №5, 60 вариант, Максим Маннаников, студент 6103-020302D\n";
+		cout << "Найти х с помощью метода Ньютона 628x^11 + 2154x^9 + 797x^5 + 4051x - 2045 = 0\n";
+		cout << "Введите начало интервала: \n";
+		double a, b, e;
+		cout << "a = ";
+		cin >> a;
+		cout << "Введите конец интервала: \n";
+		cout << "b = ";
+		cin >> b;
+		cout << "Введите погрешность: \n";
+		cout << "e = ";
+		cin >> e;
+		double xC = a, xl2 = xC;
+		int i = 1;
+		cout << "№" << setw(10) << "x"
+			<< setw(10) << "f(x)"
+			<< setw(18) << "f'(x)"
+			<< setw(20) << "Погрешность"
+			<< endl;
+		do
+		{
+			xC = xl2 - function(xl2) / derivative(xl2);
+			xl2 = xC;
+			cout << i << setw(12) << xC
+				<< setw(16) << function(xl2)
+				<< setw(16) << derivative(xl2)
+				<< setw(16) << (abs(function(xl2)) / abs(derivative(xC)))
+				<< endl;
+			i++;
+		} while (function(xC) != 0 && (abs(function(xl2)) / abs(derivative(xC))) > e && xC <= b);
+		cout << "Результат C++: " << xC << endl;
+		double xASM = a, xl1 = xASM;
+		i = 1;
+		cout << "№" << setw(10) << "x"
+			<< setw(10) << "f(x)"
+			<< setw(18) << "f'(x)"
+			<< setw(20) << "Погрешность"
+			<< endl;
+		do
+		{
+			xASM = xl1 - calcASMF(xl1) / calcASMD(xl1);
+			xl1 = xASM;
+			cout << i << setw(12) << xASM
+				<< setw(16) << calcASMF(xl1)
+				<< setw(16) << calcASMD(xASM)
+				<< setw(16) << (abs(calcASMF(xl1)) / abs(calcASMD(xASM)))
+				<< endl;
+			i++;
+		} while (calcASMF(xASM) != 0 && (abs(calcASMF(xl1)) / abs(calcASMD(xASM))) > e && xASM <= b);
+		cout << "Результат ASM: " << xASM << endl;
+		system("PAUSE");
+		return 0;
+	}
+	catch (invalid_argument& e)
+	{
+		cout << e.what() << endl;
+	}
+}

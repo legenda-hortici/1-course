@@ -1,0 +1,85 @@
+#include <cmath>
+#include <iostream>
+#include <iomanip>
+using namespace std;
+double series_ASM(double x, int n)
+{
+	int status;
+	const int c1 = -1;
+	const int c2m = -2;
+	const int c2 = 2;
+	int counter = 1;
+	double result;
+	__asm {
+		xor eax, eax
+		xor ebx, ebx
+		xor edx, edx
+		xor ecx, ecx
+		mov ecx, n       // ecx = n
+		finit             //                  
+		fld x             //  x 
+		fild c2m           //  -2        x
+		faddp st(1), st(0)//  x-2   
+		fld st            //  x-2       x-2
+		fmulp st(1), st(0)//(x-2)^2
+		fild c2           //  2         (x-2)^2
+		fdiv              //(x-2)^2/2
+		fldz              //   0        (x-2)^2/2
+		fld x             //   x        0       (x-2)^2/2
+		fxch st(2)        //s=(x-2)^2/2   sum=0       x 
+		calc :
+		fadd st(1), st(0) //  s     sum +s        x     
+			inc counter
+			fild c2m            //  -2     s     sum +s        x  
+			fadd st(0), st(3)  //  x-2    s     sum +s        x
+			fld st             //  x-2    x-2     s         sum +s        x  
+			fmulp st(1), st(0) // (x-2)^2  s    sum +s        x 
+			fild counter       //   k   (x-2)^2  s    sum +s        x
+			fild c1            //   -1    k   (x-2)^2  s    sum +s        x
+			faddp st(1), st(0) //  k-1  (x-2)^2  s    sum +s        x
+			fmulp st(1), st(0) //(k-1)*(x-2)^2  s    sum +s        x  
+			fild counter       //   k    (k-1)*(x-2)^2  s    sum +s        x  
+			fdivp st(1), st(0) //(k-1)*(x-2)^2/k      s    sum +s        x
+			fmulp st(1), st(0) //(k-1)*(x-2)^2*s/k    sum +s        x
+			fild c1            // -1   (k-1)*(x-2)^2*s/k    sum +s        x
+			fmulp st(1), st(0) //(-1)*(k-1)*(x-2)^2*s/k 
+			cmp ecx, counter;
+		jge calc
+			jl endcalc
+			endcalc :
+		fstp result //сброс с вершины стека текущего члена s
+			fstp result
+	}
+	n = counter;
+	return result;
+}
+double series_CPP(double x, int n)
+{
+	double result = 0;
+	for (int i = 1; i <= n; i++)
+	{
+		result += pow(-1, i - 1)*pow(x - 2, 2 * i) / (2 * i);
+	}
+	return result;
+}
+int main()
+{
+	setlocale(LC_ALL, "RUSSIAN");
+	double x;
+	int n;
+	cout << "Лабораторная работа №8 " << endl << " Выполнила: студент группы 6103 - 020302D Мананников Максим"
+		<< endl << " Вариант 12 " << endl <<
+		"Вычислить сумму ряда с n-ым членом: (-1)^(n-1)*(x-2^(2n))/2n" << endl;
+	cout << " Введите число членов числового ряда = ";
+	cin >> n;
+	cout << " Введите x = ";
+	cin >> x;
+	cout.precision(18);
+	cout << setw(2) << "n" << setw(20) << "ASM - S(n)" << setw(20) << "C++ - S(n)" << endl;
+	for (int i = 1; i <= n; i++)
+	{
+		cout << setw(2) << i << setw(30) << series_ASM(x, i) << setw(30) << series_CPP(x, i) << setw(30) << series_CPP(x, i) - series_ASM(x, i) << endl;
+	}
+	system("PAUSE");
+	return 0;
+}

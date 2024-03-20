@@ -1,0 +1,65 @@
+#include <stdio.h> // стандартный ввод/вывод
+#include <iostream> // потоковый ввод/вывод
+
+int calc_cpp(int a, int b, int c)
+{
+	return (1 + 6 * a - b / 2) / (c + a/b);
+}
+
+int calc_asm(int a, int b, int c)
+{
+	int result = 0;
+	__asm {
+		mov	eax, a
+		mov	ebx, b
+		cdq
+		idiv ebx  //<eax>=a/b
+		mov ebx, c
+		add eax,ebx
+		push eax //в стеке c+a/b
+
+		mov ebx, 6
+		mov ecx, a
+		imul ebx, ecx //<ebx>=6*a
+		mov eax, b
+		mov ecx, 2
+		cdq
+		idiv ecx  //<eax>=b/2
+		sub ebx, eax //<ebx>=6*a-b/2
+		inc ebx //<ebx>=6*a-b/2+1
+		mov eax, ebx //<eax>=6*a-b/2+1
+		pop ebx //<ebx>=c+a/b
+		cdq
+		idiv ebx //<eax>=(1 + 6 * a - b / 2) / (c + a/b)
+		mov result, eax
+	}
+	return result; // возвращаем результат вычисления выражения
+}
+
+int main()
+{
+	setlocale(LC_ALL, "RUSSIAN");
+	std::cout << "Ассемблер. Лабораторная работа № 1. Арифметические и логические команды\n";
+	std::cout << "Выполнил: Мананников М.А, группа 6103-020302D\n";
+	std::cout << "Вариант 42:(1 + 6*a - b/2)/(c + a/b);\n\n";
+	int a, b, c;
+	std::cout << "a = "; // потоковый вывод
+	std::cin >> a; // потоковый ввод
+	printf("b = ");// стандартный вывод
+	scanf_s("%d", &b);// стандартный ввод
+	std::cout << "c = ";
+	std::cin >> c;
+	if (b == 0 || (c + a / b)==0)
+	{
+		std::cout << "Попытка деления на ноль!" << std::endl;
+	}
+	else
+	{
+		int res_asm = calc_asm(a, b, c);// вычисление выражения
+		std::cout << "Результат на ассемблере= " << res_asm << std::endl;
+		int res_cpp = calc_cpp(a, b, c);// вычисление выражения		
+		std::cout << "Результат на c++= " << res_cpp << std::endl;
+	}
+	system("PAUSE");
+	return 0;
+}
